@@ -1,4 +1,6 @@
-FROM python:3.9
+FROM python:3.11-slim
+RUN adduser --disabled-password appuser
+USER appuser
 
 WORKDIR /app
 

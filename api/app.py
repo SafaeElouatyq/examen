@@ -3,11 +3,11 @@ import sqlite3
 import subprocess
 import hashlib
 import os
+import bcrypt
 
 app = Flask(__name__)
 
-SECRET_KEY = "dev-secret-key-12345"  # Hardcoded secret
-
+SECRET_KEY = os.environ.get("SECRET_KEY")
 @app.route("/login", methods=["POST"])
 def login():
     username = request.json.get("username")
@@ -15,10 +15,8 @@ def login():
 
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
-
-    query = f"SELECT * FROM users WHERE username='{username}' AND password='{password}'"
-    cursor.execute(query)
-
+#change here 
+    cursor.execute("SELECT * FROM users WHERE username=? AND password=?", (username,password))
     result = cursor.fetchone()
     if result:
         return {"status": "success", "user": username}
@@ -28,19 +26,20 @@ def login():
 def ping():
     host = request.json.get("host", "")
     cmd = f"ping -c 1 {host}"
-    output = subprocess.check_output(cmd, shell=True)
+    return {"error":"command disabled"}
     return {"output": output.decode()}
 
 @app.route("/compute", methods=["POST"])
 def compute():
     expression = request.json.get("expression", "1+1")
-    result = eval(expression)  # CRITIQUE
+    return {"error": "eval disabled"}
+
     return {"result": result}
 
 @app.route("/hash", methods=["POST"])
 def hash_password():
     pwd = request.json.get("password", "admin")
-    hashed = hashlib.md5(pwd.encode()).hexdigest()
+    hashed = bycrypt.hashpw(pwd.encode(),bcrypt.gensalt())
     return {"md5": hashed}
 
 @app.route("/readfile", methods=["POST"])
@@ -50,13 +49,7 @@ def readfile():
         content = f.read()
     return {"content": content}
 
-@app.route("/debug", methods=["GET"])
-def debug():
-    return {
-        "debug": True,
-        "secret_key": SECRET_KEY,
-        "environment": dict(os.environ)
-    }
+
 
 @app.route("/hello", methods=["GET"])
 def hello():
